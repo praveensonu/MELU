@@ -161,32 +161,32 @@ if cfg.loss_type == 'title_gd':
                           tokenizer = tokenizer, 
                           max_length=256)
     print('\n\nLength of tokenized dataset', len(dataset))
-    
-
-    trainer = GradDiffTrainer(
-        model = model,
-        args = training_args,
-        train_dataset = dataset,
-        tokenizer = tokenizer,
-        data_collator = custom_gd_collator_forget,
-    )
 
 
-# ------- dataset and training args for the gradient ascent method
+  # ------- dataset for the gradient ascent method ----- 
 if cfg.loss_type == 'grad_ascent' :
     print('\n\ncreating the dataset for gradient ascent')
     dataset = SingleDataset(forget_data = forget,
                             tokenizer = tokenizer,
                             max_length = 256) 
 
-    trainer = GATrainer(
-            model = model, 
-            args = training_args,
-            train_dataset = dataset,
-            tokenizer = tokenizer,
-            data_collator = custom_data_collator_forget,
-            )
-    
+
+if cfg.loss_type == 'grad_ascent':
+  trainer = GATrainer(
+        model = model, 
+        args = training_args,
+        train_dataset = dataset,
+        tokenizer = tokenizer,
+        data_collator = custom_data_collator_forget,
+        )
+else:
+  trainer = GradDiffTrainer(
+  model = model,
+  args = training_args,
+  train_dataset = dataset,
+  tokenizer = tokenizer,
+  data_collator = custom_gd_collator_forget,
+)
 
 trainer.train()
 
