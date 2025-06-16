@@ -1,9 +1,9 @@
 # to run the script, use the command: 
-# 1. export CUDA_VISIBLE_DEVICES=4,5
+# 1. export CUDA_VISIBLE_DEVICES=1,3
 # 2. accelerate launch --num_processes 2 gd.py
 
-# import os
-# os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+#import os
+#os.environ['CUDA_VISIBLE_DEVICES'] = '0,1' if you want to use this way
 
 
 
@@ -85,14 +85,13 @@ training_args = TrainingArguments(
     label_names = ['labels'],
     bf16 = True,
     gradient_accumulation_steps= cfg.gradient_accumulation_steps,
-    report_to = 'wandb',
 )
 
 
 # ------- dataset and training args for the standard gradient difference method
 
 
-if cfg.loss_type == '1_1seq':
+if cfg.loss_type == 'gd_1_1seq':
     print('\n\ncreating the dataset for gradient diff (length of forget)')
     retain_df = retain.iloc[:forget.shape[0]]
     print('\n\nForget shape is:',forget.shape)
@@ -104,7 +103,7 @@ if cfg.loss_type == '1_1seq':
                           max_length=256)
     
 
-if cfg.loss_type == '1_1random':
+if cfg.loss_type == 'gd_1_1random':
     print('\n\ncreating the dataset for tofu grad diff (random chosing of retain)')
     dataset = DualDatasetRandom(forget_data = forget, 
                           retain_data = retain, 
@@ -112,7 +111,7 @@ if cfg.loss_type == '1_1random':
                           max_length=256)
 
 
-if cfg.loss_type == 'balanced':
+if cfg.loss_type == 'gd_balanced':
     balanced_r = pd.read_csv('balanced_retain.csv')
     print('creating the dataset for balanced gradient diff')
     balanced_ret = make_template_format(balanced_r)
@@ -124,7 +123,7 @@ if cfg.loss_type == 'balanced':
                           max_length=256) 
 
 
-if cfg.loss_type == 'direct':
+if cfg.loss_type == 'gd_direct':
     print('\n\ncreating the dataset for direct connections gradient diff')
     retain_df = retain.loc[retain['type'] != 'domain'] # domain == indirect, initially we followed which retainset matter? paper terminology
     print('\n\nRemoved indirect, retain shape is:',retain_df.shape)
@@ -135,7 +134,7 @@ if cfg.loss_type == 'direct':
                           max_length=256) 
 
 
-if cfg.loss_type == 'indirect':
+if cfg.loss_type == 'gd_indirect':
     print('\n\ncreating the dataset for indirect connections gradient diff')
     retain_df = retain.loc[retain['type'] != 'entity'] # entity == direct, initially we followed which retainset matter? paper terminology
     print('\n\nRemoved direct, retain shape is:',retain_df.shape)
@@ -145,16 +144,16 @@ if cfg.loss_type == 'indirect':
                           tokenizer = tokenizer, 
                           max_length=256) 
 
-if cfg.loss_type == 'cyclic':
+if cfg.loss_type == 'gd_cyclic':
     print('creating the dataset Cyclic approach')
     dataset = DualDataset(forget_data = forget, 
                           retain_data = retain, 
                           tokenizer = tokenizer, 
                           max_length=256)
 
-if cfg.loss_type == 'melu':
+if cfg.loss_type == 'gd_melu':
     print('\n\ncreating the dataset for MELU approach')
-    melu_data = pd.read_csv('melu.csv')
+    melu_data = pd.read_csv(cfg.melu_path)
     def make_template_format(df):
         df['question_forget'] = df['question_forget'].apply(lambda x : LLAMA3_CHAT_TEMPLATE.format(question = x))
         df['answer_forget'] = df['answer_forget'].apply(lambda x : x + tokenizer.eos_token)
