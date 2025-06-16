@@ -1,6 +1,6 @@
 # to run the script, use the command: 
 # 1. export CUDA_VISIBLE_DEVICES=1,3
-# 2. accelerate launch --num_processes 2 gd.py
+# 2. accelerate launch --multi_gpu --num_processes 2 gd.py
 
 #import os
 #os.environ['CUDA_VISIBLE_DEVICES'] = '0,1' if you want to use this way
@@ -35,7 +35,6 @@ retain = pd.read_csv(cfg.retain_path)
 print(f"\nLoading the Tokenizer {cfg.model_id}")
 tokenizer = AutoTokenizer.from_pretrained(cfg.model_id, token = cfg.access_token)
 tokenizer.pad_token = tokenizer.eos_token
-tokenizer.padding_side = "left"
 
 
 print(f"\nLoading the Model {cfg.model_id}")
