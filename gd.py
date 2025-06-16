@@ -105,7 +105,7 @@ if cfg.loss_type == '1_1seq':
     
 
 if cfg.loss_type == '1_1random':
-    print('creating the dataset for vanilla gradient diff')
+    print('\n\ncreating the dataset for tofu grad diff (random chosing of retain)')
     dataset = DualDatasetRandom(forget_data = forget, 
                           retain_data = retain, 
                           tokenizer = tokenizer, 
@@ -125,9 +125,9 @@ if cfg.loss_type == 'balanced':
 
 
 if cfg.loss_type == 'direct':
-    print('\n\ncreating the dataset for entity only gradient diff')
-    retain_df = retain.loc[retain['type'] != 'domain']
-    print('\n\nRemoved Domain, retain shape is:',retain_df.shape)
+    print('\n\ncreating the dataset for direct connections gradient diff')
+    retain_df = retain.loc[retain['type'] != 'domain'] # domain == indirect, initially we followed which retainset matter? paper terminology
+    print('\n\nRemoved indirect, retain shape is:',retain_df.shape)
     print('\n\nDomain Exclusive type:', retain_df['type'].value_counts(normalize=True))
     dataset = DualDataset(forget_data = forget, 
                           retain_data = retain_df, 
@@ -136,9 +136,9 @@ if cfg.loss_type == 'direct':
 
 
 if cfg.loss_type == 'indirect':
-    print('\n\ncreating the dataset for domain only gradient diff')
-    retain_df = retain.loc[retain['type'] != 'entity']
-    print('\n\nRemoved Domain, retain shape is:',retain_df.shape)
+    print('\n\ncreating the dataset for indirect connections gradient diff')
+    retain_df = retain.loc[retain['type'] != 'entity'] # entity == direct, initially we followed which retainset matter? paper terminology
+    print('\n\nRemoved direct, retain shape is:',retain_df.shape)
     print('\n\nDomain Exclusive type:', retain_df['type'].value_counts(normalize=True))
     dataset = DualDataset(forget_data = forget, 
                           retain_data = retain_df, 
@@ -146,14 +146,14 @@ if cfg.loss_type == 'indirect':
                           max_length=256) 
 
 if cfg.loss_type == 'cyclic':
-    print('creating the dataset for vanilla gradient diff')
+    print('creating the dataset Cyclic approach')
     dataset = DualDataset(forget_data = forget, 
                           retain_data = retain, 
                           tokenizer = tokenizer, 
                           max_length=256)
 
 if cfg.loss_type == 'melu':
-    print('\n\ncreating the dataset for title gradient diff')
+    print('\n\ncreating the dataset for MELU approach')
     melu_data = pd.read_csv('melu.csv')
     def make_template_format(df):
         df['question_forget'] = df['question_forget'].apply(lambda x : LLAMA3_CHAT_TEMPLATE.format(question = x))
