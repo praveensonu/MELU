@@ -1,8 +1,10 @@
-import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 # to run the script, use the command: 
 # 1. export CUDA_VISIBLE_DEVICES=4,5
-# 2. accelerate launch --num_processes 2 run.py
+# 2. accelerate launch --num_processes 2 gd.py
+
+# import os
+# os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+
 
 
 import torch
