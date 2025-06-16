@@ -83,9 +83,9 @@ trainer = SFTTrainer(
 
 trainer.train()
 
-print(f"Model and tokenizer saved to {cfg.save_dir}")
 model = model.cpu() 
-model.merge_and_unload()
+model = model.merge_and_unload()
+print(f"Model and tokenizer saved to {cfg.save_dir}")
 model.save_pretrained(cfg.save_dir)
 tokenizer.save_pretrained(cfg.save_dir)
 #model.push_to_hub(cfg.save_dir, use_auth_token=cfg.access_token)

@@ -1,6 +1,6 @@
 import os
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '3'  # change this to your device id
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'  # change this to your device id
 import pandas as pd
 from eval_utils import compute_model_utility_retain, compute_forget_efficacy, compute_model_utility_test
 import torch
@@ -44,7 +44,6 @@ else:
     retain = pd.read_csv(cfg.retain_path)
 
 test = pd.read_csv(cfg.test_path)
-
 
 device = 'cuda'
 
@@ -156,4 +155,4 @@ results = {cfg.loss_type:
            'LoRA_alpha': cfg.LoRA_alpha,
            }}
 
-update_json_dict(cfg.results_path, results)
+update_json_dict(f'./results/scores/{cfg.exp_type}_results.json', results)

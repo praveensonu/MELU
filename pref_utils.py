@@ -4,7 +4,6 @@ import torch.nn.functional as F
 import torch.nn as nn
 from accelerate import Accelerator
 import copy
-from collators import dpo_retain_collator
 from transformers import Trainer
 
 accelerator = Accelerator()

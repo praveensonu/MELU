@@ -1,12 +1,12 @@
 # 1. export CUDA_VISIBLE_DEVICES=3,5
-# 2. accelerate launch --multi_gpu --num_processes 2 dpo_trainer.py
+# 2. accelerate launch --multi_gpu --num_processes 2 preference.py
 
 # import os
 # os.environ['CUDA_VISIBLE_DEVICES'] = '6'
 
 from pref_utils import *
 from pref_data_module import *
-from transformers import AutoTokenizer, AutoModelForCausalLM, TrainingArguments,default_data_collator
+from transformers import AutoTokenizer, AutoModelForCausalLM, TrainingArguments, default_data_collator
 from accelerate import  Accelerator
 from config import Config
 import torch
@@ -53,7 +53,7 @@ lora_config = LoraConfig(
 model = get_peft_model(policy_model, lora_config)
 print("PEFT model created.")
 model.print_trainable_parameters()
-model.config.use_cache = False # Important for gradient checkpointing
+model.config.use_cache = False 
 
 # --- Load reference model ---
 ref_model = AutoModelForCausalLM.from_pretrained(
@@ -103,8 +103,8 @@ training_args = TrainingArguments(
         label_names = ['labels'],
         bf16 = True,
         gradient_accumulation_steps= cfg.gradient_accumulation_steps,
-        # remove_unused_columns=False,
-        # ddp_find_unused_parameters=False,
+        remove_unused_columns=False,
+        ddp_find_unused_parameters=False,
 )
 
 
@@ -479,16 +479,12 @@ if cfg.exp_type == 'npo_melu':
      )
 
 
-
-
-
-
 trainer.train()
 
 accelerator.wait_for_everyone()
 model.save_pretrained(cfg.save_dir)
 if training_args.local_rank <= 0:
-    tokenizer.save_pretrained(f"{cfg.save_dir}/unlearned_model_final")
+    tokenizer.save_pretrained(cfg.save_dir)
     print(f"Rank {training_args.local_rank}: Tokenizer saved.")
 else:
     tokenizer.save_pretrained(cfg.save_dir)
