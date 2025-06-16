@@ -11,7 +11,7 @@ import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM, TrainingArguments
 from config import Config
 from peft import  LoraConfig, get_peft_model
-from data_module import DualDataset, SingleDataset, DualTitleDataset
+from data_module import DualDataset, SingleDataset, DualTitleDataset, DualDatasetRandom
 from collators import custom_gd_collator_forget, custom_data_collator_forget
 from utils import find_all_linear_names
 from forget_trainer import GATrainer, GradDiffTrainer
@@ -30,7 +30,7 @@ cfg = Config()
 print('loading the forget, retain')
 forget = pd.read_csv(cfg.forget_path) 
 retain = pd.read_csv(cfg.retain_path)
-balanced_r = pd.read_csv('balanced_retain.csv')
+
 
 print(f"\nLoading the Tokenizer {cfg.model_id}")
 tokenizer = AutoTokenizer.from_pretrained(cfg.model_id, token = cfg.access_token)
@@ -92,7 +92,7 @@ training_args = TrainingArguments(
 # ------- dataset and training args for the standard gradient difference method
 
 
-if cfg.loss_type == 'grad_diff':
+if cfg.loss_type == '1_1seq':
     print('\n\ncreating the dataset for gradient diff (length of forget)')
     retain_df = retain.iloc[:forget.shape[0]]
     print('\n\nForget shape is:',forget.shape)
@@ -104,15 +104,16 @@ if cfg.loss_type == 'grad_diff':
                           max_length=256)
     
 
-if cfg.loss_type == 'vanilla_grad_diff':
+if cfg.loss_type == '1_1random':
     print('creating the dataset for vanilla gradient diff')
-    dataset = DualDataset(forget_data = forget, 
+    dataset = DualDatasetRandom(forget_data = forget, 
                           retain_data = retain, 
                           tokenizer = tokenizer, 
                           max_length=256)
 
 
-if cfg.loss_type == 'balanced_grad_diff':
+if cfg.loss_type == 'balanced':
+    balanced_r = pd.read_csv('balanced_retain.csv')
     print('creating the dataset for balanced gradient diff')
     balanced_ret = make_template_format(balanced_r)
     print('balanced retain question and answer\n',balanced_ret['question'][0], balanced_ret['answer'][0])
@@ -123,7 +124,7 @@ if cfg.loss_type == 'balanced_grad_diff':
                           max_length=256) 
 
 
-if cfg.loss_type == 'entity_only_grad_diff':
+if cfg.loss_type == 'direct':
     print('\n\ncreating the dataset for entity only gradient diff')
     retain_df = retain.loc[retain['type'] != 'domain']
     print('\n\nRemoved Domain, retain shape is:',retain_df.shape)
@@ -134,7 +135,7 @@ if cfg.loss_type == 'entity_only_grad_diff':
                           max_length=256) 
 
 
-if cfg.loss_type == 'domain_only_grad_diff':
+if cfg.loss_type == 'indirect':
     print('\n\ncreating the dataset for domain only gradient diff')
     retain_df = retain.loc[retain['type'] != 'entity']
     print('\n\nRemoved Domain, retain shape is:',retain_df.shape)
@@ -144,10 +145,16 @@ if cfg.loss_type == 'domain_only_grad_diff':
                           tokenizer = tokenizer, 
                           max_length=256) 
 
+if cfg.loss_type == 'cyclic':
+    print('creating the dataset for vanilla gradient diff')
+    dataset = DualDataset(forget_data = forget, 
+                          retain_data = retain, 
+                          tokenizer = tokenizer, 
+                          max_length=256)
 
-if cfg.loss_type == 'title_gd':
+if cfg.loss_type == 'melu':
     print('\n\ncreating the dataset for title gradient diff')
-    title_df = pd.read_csv('title_df.csv')
+    melu_data = pd.read_csv('melu.csv')
     def make_template_format(df):
         df['question_forget'] = df['question_forget'].apply(lambda x : LLAMA3_CHAT_TEMPLATE.format(question = x))
         df['answer_forget'] = df['answer_forget'].apply(lambda x : x + tokenizer.eos_token)
@@ -155,11 +162,11 @@ if cfg.loss_type == 'title_gd':
         df['answer_retain'] = df['answer_retain'].apply(lambda x : x + tokenizer.eos_token)
         return df
 
-    title_df = make_template_format(title_df)
-    print('\n\nTitle df shape is:',title_df.shape)
-    print('\n\nForget question and answer\n',title_df['question_forget'][0], title_df['answer_forget'][0])
-    print('\n\nRetain df question and answer\n',title_df['question_retain'][0], title_df['answer_retain'][0])
-    dataset = DualTitleDataset(paired_df=title_df,
+    melu_data = make_template_format(melu_data)
+    print('\n\nMELU df shape is:',melu_data.shape)
+    print('\n\nForget question and answer\n',melu_data['question_forget'][0], melu_data['answer_forget'][0])
+    print('\n\nRetain df question and answer\n',melu_data['question_retain'][0], melu_data['answer_retain'][0])
+    dataset = DualTitleDataset(paired_df=melu_data,
                           tokenizer = tokenizer, 
                           max_length=256)
     print('\n\nLength of tokenized dataset', len(dataset))
@@ -174,7 +181,7 @@ if cfg.loss_type == 'grad_ascent' :
 
 
 if cfg.loss_type == 'grad_ascent':
-  trainer = GATrainer(
+    trainer = GATrainer(
         model = model, 
         args = training_args,
         train_dataset = dataset,
@@ -182,13 +189,13 @@ if cfg.loss_type == 'grad_ascent':
         data_collator = custom_data_collator_forget,
         )
 else:
-  trainer = GradDiffTrainer(
-  model = model,
-  args = training_args,
-  train_dataset = dataset,
-  tokenizer = tokenizer,
-  data_collator = custom_gd_collator_forget,
-)
+    trainer = GradDiffTrainer(
+        model = model,
+        args = training_args,
+        train_dataset = dataset,
+        tokenizer = tokenizer,
+        data_collator = custom_gd_collator_forget,
+        )
 
 trainer.train()
 
