@@ -90,7 +90,7 @@ python eval.py
 python mmlu.py
 ```
 
-Token diversity will be calculated on all the datasets at once 
+Token diversity will be calculated on all the results at once 
 ```bash
 python token_diversity.py
 ```
