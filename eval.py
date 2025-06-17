@@ -1,6 +1,3 @@
-import os
-
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'  # change this to your device id
 import pandas as pd
 from eval_utils import compute_model_utility_retain, compute_forget_efficacy, compute_model_utility_test
 import torch
