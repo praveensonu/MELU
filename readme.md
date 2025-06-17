@@ -42,9 +42,14 @@ export CUDA_VISIBLE_DEVICES=0,1
 accelerate launch --multi_gpu --num_processes 2 finetune.py
 ```
 
-For evaluation, always use 
+For evaluation, please run
 ```bash
 python eval.py
+```
+
+For MMLU, please run
+```bash
+python mmlu.py
 ```
 
 The scores will be updated in the `results/scores` folder.
@@ -67,6 +72,9 @@ accelerate launch --multi_gpu --num_processes 2 gd.py
 ```bash
 python eval.py
 ```
+```bash
+python mmlu.py
+```
 
 For preference based methods
 
@@ -78,6 +86,15 @@ accelerate launch --multi_gpu --num_processes 2 preference.py
 ```bash
 python eval.py
 ```
+```bash
+python mmlu.py
+```
+
+Token diversity will be calculated on all the datasets at once 
+```bash
+python token_diversity.py
+```
+
 
 
 
